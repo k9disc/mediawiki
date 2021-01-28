@@ -285,7 +285,7 @@ class CacheTime implements ParserCacheMetadata, JsonUnserializable {
 		$this->mCacheExpiry = $jsonData['CacheExpiry'];
 		$this->mCacheTime = $jsonData['CacheTime'];
 		$this->mCacheRevisionId = $jsonData['CacheRevisionId'];
-		$this->mVersion = $jsonData['Version']; // XXX: we can probably remove this
+		$this->mVersion = $jsonData['Version'] ?? Parser::VERSION; // XXX: we can probably remove this
 	}
 
 	public function __wakeup() {
