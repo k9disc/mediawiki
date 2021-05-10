@@ -28,8 +28,6 @@ use DeferredUpdates;
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\HookContainer\HookRunner;
-use MediaWiki\MediaWikiServices;
-use MediaWiki\User\ActorNormalization;
 use MediaWiki\User\ActorStoreFactory;
 use MediaWiki\User\UserIdentity;
 use MWException;
@@ -81,7 +79,7 @@ class DatabaseBlockStore {
 	/**
 	 * @param ServiceOptions $options
 	 * @param LoggerInterface $logger
-	 * @param ActorNormalization|ActorStoreFactory $actorStoreFactory
+	 * @param ActorStoreFactory $actorStoreFactory
 	 * @param BlockRestrictionStore $blockRestrictionStore
 	 * @param CommentStore $commentStore
 	 * @param HookContainer $hookContainer
@@ -91,7 +89,7 @@ class DatabaseBlockStore {
 	public function __construct(
 		ServiceOptions $options,
 		LoggerInterface $logger,
-		$actorStoreFactory,
+		ActorStoreFactory $actorStoreFactory,
 		BlockRestrictionStore $blockRestrictionStore,
 		CommentStore $commentStore,
 		HookContainer $hookContainer,
@@ -102,17 +100,12 @@ class DatabaseBlockStore {
 
 		$this->options = $options;
 		$this->logger = $logger;
+		$this->actorStoreFactory = $actorStoreFactory;
 		$this->blockRestrictionStore = $blockRestrictionStore;
 		$this->commentStore = $commentStore;
 		$this->hookRunner = new HookRunner( $hookContainer );
 		$this->loadBalancer = $loadBalancer;
 		$this->readOnlyMode = $readOnlyMode;
-
-		if ( $actorStoreFactory instanceof ActorStoreFactory ) {
-			$this->actorStoreFactory = $actorStoreFactory;
-		} else {
-			$this->actorStoreFactory = MediaWikiServices::getInstance()->getActorStoreFactory();
-		}
 	}
 
 	/**
