@@ -28,7 +28,9 @@ use DeferredUpdates;
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\HookContainer\HookRunner;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\User\ActorNormalization;
+use MediaWiki\User\ActorStoreFactory;
 use MediaWiki\User\UserIdentity;
 use MWException;
 use Psr\Log\LoggerInterface;
@@ -58,8 +60,8 @@ class DatabaseBlockStore {
 	/** @var LoggerInterface */
 	private $logger;
 
-	/** @var ActorNormalization */
-	private $actorNormalization;
+	/** @var ActorStoreFactory */
+	private $actorStoreFactory;
 
 	/** @var BlockRestrictionStore */
 	private $blockRestrictionStore;
@@ -79,7 +81,7 @@ class DatabaseBlockStore {
 	/**
 	 * @param ServiceOptions $options
 	 * @param LoggerInterface $logger
-	 * @param ActorNormalization $actorNormalization
+	 * @param ActorNormalization|ActorStoreFactory $actorStoreFactory
 	 * @param BlockRestrictionStore $blockRestrictionStore
 	 * @param CommentStore $commentStore
 	 * @param HookContainer $hookContainer
@@ -89,7 +91,7 @@ class DatabaseBlockStore {
 	public function __construct(
 		ServiceOptions $options,
 		LoggerInterface $logger,
-		ActorNormalization $actorNormalization,
+		$actorStoreFactory,
 		BlockRestrictionStore $blockRestrictionStore,
 		CommentStore $commentStore,
 		HookContainer $hookContainer,
@@ -100,12 +102,17 @@ class DatabaseBlockStore {
 
 		$this->options = $options;
 		$this->logger = $logger;
-		$this->actorNormalization = $actorNormalization;
 		$this->blockRestrictionStore = $blockRestrictionStore;
 		$this->commentStore = $commentStore;
 		$this->hookRunner = new HookRunner( $hookContainer );
 		$this->loadBalancer = $loadBalancer;
 		$this->readOnlyMode = $readOnlyMode;
+
+		if ( $actorStoreFactory instanceof ActorStoreFactory ) {
+			$this->actorStoreFactory = $actorStoreFactory;
+		} else {
+			$this->actorStoreFactory = MediaWikiServices::getInstance()->getActorStoreFactory();
+		}
 	}
 
 	/**
@@ -354,8 +361,10 @@ class DatabaseBlockStore {
 		if ( !$block->getBlocker() ) {
 			throw new \RuntimeException( __METHOD__ . ': this block does not have a blocker' );
 		}
-		$blockerActor = $this->actorNormalization->acquireActorId( $block->getBlocker(), $dbw );
 
+		$blockerActor = $this->actorStoreFactory
+			->getActorStore( $block->getBlocker()->getWikiId() )
+			->acquireActorId( $block->getBlocker(), $dbw );
 		$blockArray = [
 			'ipb_address'          => (string)$target,
 			'ipb_user'             => $userId,
@@ -395,7 +404,11 @@ class DatabaseBlockStore {
 			throw new \RuntimeException( __METHOD__ . ': this block does not have a blocker' );
 		}
 		$dbw = $this->loadBalancer->getConnectionRef( DB_PRIMARY );
-		$blockerActor = $this->actorNormalization->acquireActorId( $block->getBlocker(), $dbw );
+
+		$blockerActor = $this->actorStoreFactory
+			->getActorNormalization()
+			->acquireActorId( $block->getBlocker(), $dbw );
+
 		$blockArray = [
 			'ipb_by_actor'       => $blockerActor,
 			'ipb_create_account' => $block->isCreateAccountBlocked(),
@@ -472,7 +485,7 @@ class DatabaseBlockStore {
 			'LIMIT' => 1,
 		];
 
-		$actor = $this->actorNormalization->findActorId( $target, $dbr );
+		$actor = $this->actorStoreFactory->getActorNormalization()->findActorId( $target, $dbr );
 		if ( !$actor ) {
 			$this->logger->debug( 'No actor found to retroactively autoblock' );
 			return [];
