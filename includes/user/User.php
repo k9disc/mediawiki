@@ -3305,7 +3305,9 @@ class User implements Authority, IDBAccessObject, UserIdentity, UserEmailContact
 		} );
 
 		$this->mTouched = $newTouched;
-		MediaWikiServices::getInstance()->getUserOptionsManager()->saveOptions( $this );
+		$dbw->onTransactionPreCommitOrIdle( function () {
+			MediaWikiServices::getInstance()->getUserOptionsManager()->saveOptions( $this );
+		}, __METHOD__ );
 
 		$this->getHookRunner()->onUserSaveSettings( $this );
 		$this->clearSharedCache( 'changed' );
