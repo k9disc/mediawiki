@@ -554,6 +554,18 @@ class BlockUser {
 		// Is there a conflicting block?
 		$priorBlock = DatabaseBlock::newFromTarget( $this->target, null, /*fromPrimary=*/true );
 
+		// T287798: we are blocking an IP that is currently autoblocked
+		// we can ignore the block because ipb_address_unique allows the IP address
+		// be both manually blocked and autoblocked
+		// this will work as long as DatabaseBlock::newLoad prefers manual IP blocks
+		// over autoblocks
+		if ( $priorBlock !== null
+			&& $priorBlock->getType() === AbstractBlock::TYPE_AUTO
+			&& $this->targetType === AbstractBlock::TYPE_IP
+		) {
+			$priorBlock = null;
+		}
+
 		$isReblock = false;
 		if ( $priorBlock !== null ) {
 			// Reblock only if the caller wants so
