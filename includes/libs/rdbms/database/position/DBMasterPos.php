@@ -38,8 +38,3 @@ interface DBMasterPos extends Serializable {
 	 */
 	public function __toString();
 }
-
-/**
- * HACK for wmf.16: be able to unserialize cache entries using the new wmf.17 class name (T287988)
- */
-class_alias( DBMasterPos::class, 'Wikimedia\\Rdbms\\DBPrimaryPos' );
