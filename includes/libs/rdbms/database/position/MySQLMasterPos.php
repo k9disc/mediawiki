@@ -363,3 +363,8 @@ class MySQLMasterPos implements DBMasterPos {
 			: $this->getLogFile() . "/{$this->logPos[self::CORD_EVENT]}";
 	}
 }
+
+/**
+ * HACK for wmf.16: be able to unserialize cache entries using the new wmf.17 class name (T287988)
+ */
+class_alias( MySQLMasterPos::class, 'Wikimedia\\Rdbms\\MySQLPrimaryPos' );
