@@ -55,7 +55,6 @@ use MediaWiki\Revision\RevisionRecord;
 use MediaWiki\Revision\RevisionStore;
 use MediaWiki\Revision\RevisionStoreRecord;
 use MediaWiki\Revision\SlotRecord;
-use MediaWiki\Session\CsrfTokenSet;
 use MediaWiki\User\UserIdentity;
 use MediaWiki\User\UserNameUtils;
 use MediaWiki\Watchlist\WatchlistManager;
@@ -1625,7 +1624,9 @@ class EditPage implements IEditObject {
 	 * @internal
 	 */
 	public function tokenOk( &$request ) {
-		$this->mTokenOk = ( new CsrfTokenSet( $request ) )->matchTokenField();
+		$token = $request->getVal( 'wpEditToken' );
+		$user = $this->context->getUser();
+		$this->mTokenOk = $user->matchEditToken( $token );
 		return $this->mTokenOk;
 	}
 
@@ -3489,10 +3490,7 @@ class EditPage implements IEditObject {
 		 */
 		$this->context->getOutput()->addHTML(
 			"\n" .
-			Html::hidden(
-				CsrfTokenSet::DEFAULT_FIELD_NAME,
-				$this->context->getCsrfTokenSet()->getToken()->toString()
-			) .
+			Html::hidden( "wpEditToken", $this->context->getUser()->getEditToken() ) .
 			"\n"
 		);
 	}

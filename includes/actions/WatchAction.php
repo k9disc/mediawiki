@@ -23,7 +23,6 @@
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageIdentity;
 use MediaWiki\Permissions\Authority;
-use MediaWiki\Session\CsrfTokenSet;
 use Wikimedia\ParamValidator\TypeDef\ExpiryDef;
 
 /**
@@ -333,9 +332,7 @@ class WatchAction extends FormAction {
 			$action = 'watch';
 		}
 		// This must match ApiWatch and ResourceLoaderUserOptionsModule
-		return ( new CsrfTokenSet( $user->getRequest() ) )
-			->getToken( $action )
-			->toString();
+		return $user->getEditToken( $action );
 	}
 
 	public function doesWrites() {
