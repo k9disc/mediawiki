@@ -782,3 +782,7 @@
 	path = vendor
 	url = https://gerrit.wikimedia.org/r/mediawiki/vendor
 	branch = wmf/1.37.0-wmf.23
+[submodule "extensions/VipsScaler"]
+	path = extensions/VipsScaler
+	url = https://gerrit.wikimedia.org/r/mediawiki/extensions/VipsScaler
+	branch = wmf/1.37.0-wmf.23
