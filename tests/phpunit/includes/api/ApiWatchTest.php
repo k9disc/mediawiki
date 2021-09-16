@@ -27,6 +27,10 @@ class ApiWatchTest extends ApiTestCase {
 		] );
 	}
 
+	protected function getTokens() {
+		return $this->getTokenList( self::$users['sysop'] );
+	}
+
 	public function testWatch() {
 		// Watch for a duration greater than the max ($wgWatchlistExpiryMaxDuration),
 		// which should get changed to the max
@@ -116,10 +120,13 @@ class ApiWatchTest extends ApiTestCase {
 	}
 
 	public function testWatchEdit() {
-		$data = $this->doApiRequestWithToken( [
+		$tokens = $this->getTokens();
+
+		$data = $this->doApiRequest( [
 			'action' => 'edit',
 			'title' => 'Help:UTPage', // Help namespace is hopefully wikitext
 			'text' => 'new text',
+			'token' => $tokens['edittoken'],
 			'watchlist' => 'watch'
 		] );
 
@@ -134,6 +141,8 @@ class ApiWatchTest extends ApiTestCase {
 	 * @depends testWatchEdit
 	 */
 	public function testWatchClear() {
+		$tokens = $this->getTokens();
+
 		$data = $this->doApiRequest( [
 			'action' => 'query',
 			'wllimit' => 'max',
@@ -143,11 +152,11 @@ class ApiWatchTest extends ApiTestCase {
 			$wl = $data[0]['query']['watchlist'];
 
 			foreach ( $wl as $page ) {
-				$data = $this->doApiRequestWithToken( [
+				$data = $this->doApiRequest( [
 					'action' => 'watch',
 					'title' => $page['title'],
 					'unwatch' => true,
-				] );
+					'token' => $tokens['watchtoken'] ] );
 			}
 		}
 		$data = $this->doApiRequest( [
@@ -169,8 +178,11 @@ class ApiWatchTest extends ApiTestCase {
 	}
 
 	public function testWatchProtect() {
-		$data = $this->doApiRequestWithToken( [
+		$tokens = $this->getTokens();
+
+		$data = $this->doApiRequest( [
 			'action' => 'protect',
+			'token' => $tokens['protecttoken'],
 			'title' => 'Help:UTPage',
 			'protections' => 'edit=sysop',
 			'watchlist' => 'unwatch'
@@ -182,21 +194,52 @@ class ApiWatchTest extends ApiTestCase {
 		$this->assertArrayHasKey( 'edit', $data[0]['protect']['protections'][0] );
 	}
 
-	public function testWatchRollback() {
-		$this->editPage( 'UTPage', __FUNCTION__, '',
-			NS_HELP, $this->getTestUser()->getUser() );
+	public function testGetRollbackToken() {
+		// Needs to be here to make sure the page definitely exists and to have
+		// rollback-able edit by a different user for the testWatchRollback() below.
+		$this->editPage( 'UTPage', __FUNCTION__, '', NS_HELP, $this->getTestUser()->getUser() );
+
+		$contextUser = self::$users['sysop']->getUser();
+
+		$data = $this->doApiRequest( [
+			'action' => 'query',
+			'prop' => 'revisions',
+			'titles' => 'Help:UTPage',
+			'rvtoken' => 'rollback'
+		], null, null, $contextUser );
+
+		$this->assertArrayHasKey( 'query', $data[0] );
+		$this->assertArrayHasKey( 'pages', $data[0]['query'] );
+		$keys = array_keys( $data[0]['query']['pages'] );
+		$key = array_pop( $keys );
+		$pageInfo = $data[0]['query']['pages'][$key];
+		$revInfo = $pageInfo['revisions'][0];
+
+		$this->assertArrayHasKey( 'pageid', $pageInfo );
+		$this->assertArrayHasKey( 'revisions', $pageInfo );
+		$this->assertArrayHasKey( 0, $pageInfo['revisions'] );
+		$this->assertArrayHasKey( 'rollbacktoken', $revInfo );
+
+		return [ $revInfo['user'], $contextUser ];
+	}
+
+	/**
+	 * @depends testGetRollbackToken
+	 */
+	public function testWatchRollback( $info ) {
+		list( $revUser, $contextUser ) = $info;
 		$title = Title::makeTitle( NS_HELP, 'UTPage' );
 
 		$watchlistManager = $this->getServiceContainer()->getWatchlistManager();
-		$contextUser = $this->getTestSysop()->getUser();
 
 		// This (and assertTrue below) are mostly for completeness.
 		$this->assertFalse( $watchlistManager->isWatched( $contextUser, $title ) );
 
-		$data = $this->doApiRequestWithToken( [
+		$data = $this->doApiRequest( [
 			'action' => 'rollback',
 			'title' => 'Help:UTPage',
-			'user' => $this->getTestUser()->getUser(),
+			'user' => $revUser,
+			'token' => $contextUser->getEditToken( 'rollback' ),
 			'watchlist' => 'watch'
 		] );
 

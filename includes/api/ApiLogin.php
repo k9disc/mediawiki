@@ -208,6 +208,8 @@ class ApiLogin extends ApiBase {
 			case 'Success':
 				$user = $session->getUser();
 
+				ApiQueryInfo::resetTokenCache();
+
 				// Deprecated hook
 				$injected_html = '';
 				$this->getHookRunner()->onUserLoginComplete( $user, $injected_html, true );

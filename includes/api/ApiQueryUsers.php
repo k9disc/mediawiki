@@ -35,7 +35,7 @@ use MediaWiki\User\UserOptionsLookup;
 class ApiQueryUsers extends ApiQueryBase {
 	use ApiQueryBlockInfoTrait;
 
-	private $prop;
+	private $tokenFunctions, $prop;
 
 	/** @var UserNameUtils */
 	private $userNameUtils;
@@ -96,6 +96,44 @@ class ApiQueryUsers extends ApiQueryBase {
 		$this->userGroupManager = $userGroupManager;
 		$this->userOptionsLookup = $userOptionsLookup;
 		$this->authManager = $authManager;
+	}
+
+	/**
+	 * Get an array mapping token names to their handler functions.
+	 * The prototype for a token function is func( User $actingUser, $targetUser )
+	 * it should return a token or false (permission denied)
+	 * @deprecated since 1.24
+	 * @return array Array of tokenname => function
+	 */
+	protected function getTokenFunctions() {
+		if ( isset( $this->tokenFunctions ) ) {
+			return $this->tokenFunctions;
+		}
+
+		// If we're in a mode that breaks the same-origin policy, no tokens can
+		// be obtained
+		if ( $this->lacksSameOriginSecurity() ) {
+			return [];
+		}
+
+		$this->tokenFunctions = [
+			'userrights' => [ self::class, 'getUserrightsToken' ],
+		];
+
+		return $this->tokenFunctions;
+	}
+
+	/**
+	 * @deprecated since 1.24
+	 * @internal
+	 * @param User $actingUser
+	 * @param User|UserRightsProxy $targetUser
+	 * @return string
+	 */
+	public static function getUserrightsToken( User $actingUser, $targetUser ) {
+		// Since the permissions check for userrights is non-trivial,
+		// don't bother with it here
+		return $actingUser->getEditToken( $targetUser->getName() );
 	}
 
 	public function execute() {
@@ -255,6 +293,22 @@ class ApiQueryUsers extends ApiQueryBase {
 						$this->getConfig(), $user, $params['attachedwiki']
 					);
 				}
+
+				if ( $params['token'] !== null ) {
+					$tokenFunctions = $this->getTokenFunctions();
+					foreach ( $params['token'] as $t ) {
+						$val = call_user_func(
+							$tokenFunctions[$t],
+							$this->getUser(),
+							$user
+						);
+						if ( $val === false ) {
+							$this->addWarning( [ 'apiwarn-tokennotallowed', $t ] );
+						} else {
+							$data[$key][$t . 'token'] = $val;
+						}
+					}
+				}
 			}
 		}
 
@@ -271,6 +325,23 @@ class ApiQueryUsers extends ApiQueryBase {
 
 					if ( $iwUser instanceof UserRightsProxy ) {
 						$data[$u]['interwiki'] = true;
+
+						if ( $params['token'] !== null ) {
+							$tokenFunctions = $this->getTokenFunctions();
+
+							foreach ( $params['token'] as $t ) {
+								$val = call_user_func(
+									$tokenFunctions[$t],
+									$this->getUser(),
+									$iwUser
+								);
+								if ( $val === false ) {
+									$this->addWarning( [ 'apiwarn-tokennotallowed', $t ] );
+								} else {
+									$data[$u][$t . 'token'] = $val;
+								}
+							}
+						}
 					} else {
 						$data[$u]['missing'] = true;
 						if ( isset( $this->prop['cancreate'] ) ) {
@@ -321,7 +392,9 @@ class ApiQueryUsers extends ApiQueryBase {
 	}
 
 	public function getCacheMode( $params ) {
-		if ( array_diff( (array)$params['prop'], static::$publicProps ) ) {
+		if ( isset( $params['token'] ) ) {
+			return 'private';
+		} elseif ( array_diff( (array)$params['prop'], static::$publicProps ) ) {
 			return 'anon-public-user-private';
 		} else {
 			return 'public';
@@ -356,6 +429,11 @@ class ApiQueryUsers extends ApiQueryBase {
 			'userids' => [
 				ApiBase::PARAM_ISMULTI => true,
 				ApiBase::PARAM_TYPE => 'integer'
+			],
+			'token' => [
+				ApiBase::PARAM_DEPRECATED => true,
+				ApiBase::PARAM_TYPE => array_keys( $this->getTokenFunctions() ),
+				ApiBase::PARAM_ISMULTI => true
 			],
 		];
 	}
