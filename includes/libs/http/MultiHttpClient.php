@@ -596,12 +596,6 @@ class MultiHttpClient implements LoggerAwareInterface {
 			} elseif ( !isset( $req['url'] ) ) {
 				throw new Exception( "Request has no 'url' field set." );
 			}
-			$this->logger->debug( "HTTP start: {method} {url}",
-				[
-					'method' => $req['method'],
-					'url' => $req['url'],
-				]
-			);
 			$req['query'] = $req['query'] ?? [];
 			$headers = []; // normalized headers
 			if ( isset( $req['headers'] ) ) {
@@ -614,6 +608,15 @@ class MultiHttpClient implements LoggerAwareInterface {
 				$req['body'] = '';
 				$req['headers']['content-length'] = 0;
 			}
+			$tmpHeaders = $req['headers'];
+			unset( $tmpHeaders['x-auth-token'] );
+			$this->logger->debug( "HTTP start: {method} {url}",
+				[
+					'method' => $req['method'],
+					'url' => $req['url'],
+					'headers' => $tmpHeaders,
+				]
+			);
 			$req['flags'] = $req['flags'] ?? [];
 		}
 	}
