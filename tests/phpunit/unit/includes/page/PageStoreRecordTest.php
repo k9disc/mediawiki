@@ -100,10 +100,6 @@ class PageStoreRecordTest extends MediaWikiUnitTestCase {
 		$this->assertSame( $row->page_is_redirect, $pageRecord->isRedirect() );
 
 		$this->assertSame( $row->page_lang ?? null, $pageRecord->getLanguage() );
-
-		foreach ( $row as $name => $value ) {
-			$this->assertEquals( $value, $pageRecord->getField( $name ) );
-		}
 	}
 
 	public function badConstructorProvider() {

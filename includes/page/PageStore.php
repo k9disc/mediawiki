@@ -323,9 +323,6 @@ class PageStore implements PageLookup {
 			if ( $id > 0 ) { // can't use Title::exists, it might be affected by TitleExists hook.
 				$id = $page->getId( $this->wikiId );
 				return $this->getPageById( $id, $queryFlags );
-			} elseif ( $queryFlags === self::READ_NORMAL ) {
-				// The page does not appear to exist, and we don't have to check again.
-				return null;
 			}
 		}
 
