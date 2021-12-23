@@ -950,6 +950,11 @@ class ChangeTags {
 			$filterTagIds = [];
 			$changeTagDefStore = MediaWikiServices::getInstance()->getChangeTagDefStore();
 			foreach ( (array)$filter_tag as $filterTagName ) {
+				if ( $filterTagName === 'wikieditor' ) {
+					// Return nothing.
+					$conds[] = '0=1';
+					break;
+				}
 				try {
 					$filterTagIds[] = $changeTagDefStore->getId( $filterTagName );
 				} catch ( NameTableAccessException $exception ) {
