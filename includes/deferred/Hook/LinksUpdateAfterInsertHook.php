@@ -2,7 +2,7 @@
 
 namespace MediaWiki\Hook;
 
-use MediaWiki\Deferred\LinksUpdate\LinksUpdate;
+use LinksUpdate;
 
 /**
  * This is a hook handler interface, see docs/Hooks.md.

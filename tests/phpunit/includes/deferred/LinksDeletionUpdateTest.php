@@ -1,23 +1,8 @@
 <?php
 
-use MediaWiki\Deferred\LinksUpdate\LinksDeletionUpdate;
-use MediaWiki\Deferred\LinksUpdate\LinksUpdate;
-
 /**
  * @covers LinksDeletionUpdate
  * @covers LinksUpdate
- * @covers \MediaWiki\Deferred\LinksUpdate\CategoryLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\ExternalLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\GenericPageLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\ImageLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\InterwikiLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\LangLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\LinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\LinksTableGroup
- * @covers \MediaWiki\Deferred\LinksUpdate\PageLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\PagePropsTable
- * @covers \MediaWiki\Deferred\LinksUpdate\TemplateLinksTable
- * @covers \MediaWiki\Deferred\LinksUpdate\TitleLinksTable
  *
  * @group LinksUpdate
  * @group Database

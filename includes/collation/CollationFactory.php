@@ -128,11 +128,7 @@ class CollationFactory {
 	 * @return Collation
 	 */
 	public function getCategoryCollation(): Collation {
-		return $this->makeCollation( $this->getDefaultCollationName() );
-	}
-
-	public function getDefaultCollationName(): string {
-		return $this->options->get( 'CategoryCollation' );
+		return $this->makeCollation( $this->options->get( 'CategoryCollation' ) );
 	}
 
 	/**

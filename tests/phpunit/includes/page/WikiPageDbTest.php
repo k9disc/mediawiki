@@ -1,7 +1,6 @@
 <?php
 
 use MediaWiki\Content\Renderer\ContentRenderer;
-use MediaWiki\Deferred\LinksUpdate\LinksDeletionUpdate;
 use MediaWiki\Edit\PreparedEdit;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageIdentity;

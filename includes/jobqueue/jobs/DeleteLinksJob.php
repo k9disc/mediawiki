@@ -21,8 +21,6 @@
  * @ingroup JobQueue
  */
 
-use MediaWiki\Deferred\LinksUpdate\LinksDeletionUpdate;
-use MediaWiki\Deferred\LinksUpdate\LinksUpdate;
 use MediaWiki\MediaWikiServices;
 
 /**
