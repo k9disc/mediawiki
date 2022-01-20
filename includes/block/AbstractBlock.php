@@ -23,7 +23,6 @@ namespace MediaWiki\Block;
 use CommentStoreComment;
 use IContextSource;
 use InvalidArgumentException;
-use MediaWiki\DAO\WikiAwareEntityTrait;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserIdentity;
 use Message;
@@ -36,8 +35,6 @@ use User;
  * @since 1.34 Factored out from DatabaseBlock (previously Block).
  */
 abstract class AbstractBlock implements Block {
-	use WikiAwareEntityTrait;
-
 	/** @var CommentStoreComment */
 	protected $reason;
 
@@ -83,15 +80,11 @@ abstract class AbstractBlock implements Block {
 	/** @var bool */
 	protected $isSitewide = true;
 
-	/** @var string|false */
-	protected $wikiId;
-
 	/**
 	 * Create a new block with specified parameters on a user, IP or IP range.
 	 *
 	 * @param array $options Parameters of the block, with supported options:
 	 *  - address: (string|UserIdentity) Target user name, user identity object, IP address or IP range
-	 *  - wiki: (string|false) The wiki the block has been issued in, self::LOCAL for the local wiki (since 1.38)
 	 *  - reason: (string|Message|CommentStoreComment) Reason for the block
 	 *  - timestamp: (string) The time at which the block comes into effect
 	 *  - hideName: (bool) Hide the target user name
@@ -99,7 +92,6 @@ abstract class AbstractBlock implements Block {
 	public function __construct( array $options = [] ) {
 		$defaults = [
 			'address'         => '',
-			'wiki'            => self::LOCAL,
 			'reason'          => '',
 			'timestamp'       => '',
 			'hideName'        => false,
@@ -108,8 +100,8 @@ abstract class AbstractBlock implements Block {
 
 		$options += $defaults;
 
-		$this->wikiId = $options['wiki'];
 		$this->setTarget( $options['address'] );
+
 		$this->setReason( $options['reason'] );
 		$this->setTimestamp( wfTimestamp( TS_MW, $options['timestamp'] ) );
 		$this->setHideName( (bool)$options['hideName'] );
@@ -119,10 +111,9 @@ abstract class AbstractBlock implements Block {
 	/**
 	 * Get the user id of the blocking sysop
 	 *
-	 * @param string|false $wikiId (since 1.38)
 	 * @return int (0 for foreign users)
 	 */
-	abstract public function getBy( $wikiId = self::LOCAL ): int;
+	abstract public function getBy();
 
 	/**
 	 * Get the username of the blocking sysop
@@ -132,11 +123,10 @@ abstract class AbstractBlock implements Block {
 	abstract public function getByName();
 
 	/**
-	 * @inheritDoc
+	 * Get the block ID
+	 * @return int|null
 	 */
-	public function getId( $wikiId = self::LOCAL ): ?int {
-		// TODO: Enable deprecation warnings once cross-wiki accesses have been removed, see T274817
-		// $this->deprecateInvalidCrossWiki( $wikiId, '1.38' );
+	public function getId(): ?int {
 		return null;
 	}
 
@@ -401,22 +391,10 @@ abstract class AbstractBlock implements Block {
 			$this->target = null;
 			$this->type = null;
 		} else {
-			list( $parsedTarget, $this->type ) = MediaWikiServices::getInstance()
+			list( $this->target, $this->type ) = MediaWikiServices::getInstance()
 				->getBlockUtils()
 				->parseBlockTarget( $target );
-			if ( $parsedTarget !== null ) {
-				$this->assertWiki( is_string( $parsedTarget ) ? self::LOCAL : $parsedTarget->getWikiId() );
-			}
-			$this->target = $parsedTarget;
 		}
-	}
-
-	/**
-	 * @since 1.38
-	 * @return string|false
-	 */
-	public function getWikiId() {
-		return $this->wikiId;
 	}
 
 	/**

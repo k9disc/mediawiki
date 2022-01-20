@@ -25,7 +25,6 @@ use Wikimedia\Assert\PreconditionException;
  *
  * Examples: {@link RevisionRecord::getId()} or {@link PageIdentity::getId()}
  *
- * @see Block
  * @see PageIdentity
  * @see RevisionRecord
  * @see UserIdentity

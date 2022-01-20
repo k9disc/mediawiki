@@ -166,7 +166,7 @@ class PasswordResetTest extends MediaWikiIntegrationTestCase {
 				'block' => new CompositeBlock( [
 					'originalBlocks' => [
 						new SystemBlock( [ 'systemBlock' => 'wgSoftBlockRanges', 'anonOnly' => true ] ),
-						new DatabaseBlock( [] ),
+						new Block( [] ),
 					]
 				] ),
 				'globalBlock' => null,

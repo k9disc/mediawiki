@@ -224,7 +224,6 @@ class SkinTest extends MediaWikiIntegrationTestCase {
 			->with( $relevantUser )
 			->willReturn( new DatabaseBlock( [
 				'address' => $relevantUser,
-				'wiki' => $relevantUser->getWikiId(),
 				'by' => UserIdentityValue::newAnonymous( '123.123.123.123' ),
 				'hideName' => true
 			] ) );

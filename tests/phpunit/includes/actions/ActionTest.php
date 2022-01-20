@@ -1,7 +1,6 @@
 <?php
 
 use MediaWiki\Block\DatabaseBlock;
-use MediaWiki\DAO\WikiAwareEntity;
 use MediaWiki\Permissions\PermissionManager;
 
 /**
@@ -280,8 +279,6 @@ class ActionTest extends MediaWikiIntegrationTestCase {
 		$action = $this->getAction( 'unblock', $page );
 
 		$user = $this->createMock( User::class );
-
-		$user->method( 'getWikiId' )->willReturn( WikiAwareEntity::LOCAL );
 
 		$block = new DatabaseBlock( [
 			'address' => $user,

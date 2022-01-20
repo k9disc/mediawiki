@@ -125,10 +125,10 @@ class CompositeBlock extends AbstractBlock {
 	/**
 	 * @inheritDoc
 	 */
-	public function getIdentifier( $wikiId = self::LOCAL ) {
+	public function getIdentifier() {
 		$identifier = [];
 		foreach ( $this->originalBlocks as $block ) {
-			$identifier[] = $block->getIdentifier( $wikiId );
+			$identifier[] = $block->getIdentifier();
 		}
 		return $identifier;
 	}
@@ -197,8 +197,7 @@ class CompositeBlock extends AbstractBlock {
 	/**
 	 * @inheritDoc
 	 */
-	public function getBy( $wikiId = self::LOCAL ): int {
-		$this->deprecateInvalidCrossWiki( $wikiId, '1.38' );
+	public function getBy() {
 		return 0;
 	}
 
